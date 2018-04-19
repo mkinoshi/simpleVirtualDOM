@@ -1,10 +1,10 @@
 /*
-* This file contains all of the functions used to test virtual DOM I implemented.
+* This file contains all of the functions used to test virtual DOMs I implemented.
 * Instead of replicating React event cycle, I have changed jsx depending on time
 * and user interaction
 */
 
-// Function peodically checks virtual DOM
+// Function periodically checks virtual DOMs
 const update = (element, count) => {
   updateIfNecessary(element, updateViews(count), updateViews(count + 1), 0)
   // patch(el, patches);
@@ -14,7 +14,7 @@ const update = (element, count) => {
   setTimeout(() => update(element, count + 1), 500)
 }
 
-// Function that adds converted DOM to specified element
+// Function that adds a converted DOM to specified element
 const render = (element) => {
   element.appendChild(convertToDOM(updateViews(0)))
   setTimeout(() => update(element, 0), 500)

@@ -2,17 +2,17 @@
 * This file implements virtualDOM which can handle jsx
 * I assume that Babel is correctly working, and it can correctly
 * translate jsx to (type, props, children)
-* virtualDOM is represented as (type: String, props: Object, children: Array of virtualDOM)
+* Virtual DOM is represented as (type: String, props: Object, children: Array of virtual DOM)
 * One of the drawbacks of this implementation is that it destroys a DOM and replace it 
 * with another DOM when you update props of an existing virtual DOM component. It can be optimzed
-* by chaning only necessary props of DOM, but to avoid the complications you face when you try 
-* to handl event listers, I chose that way. Furthermore, currently it shows all of the property in
+* by chaning only necessary props of DOM, but to avoid the complications I faced when I tried 
+* to handl event listers properly, I chose that way. Furthermore, currently it shows all of the property in
 * actual DOM, and it can be changed when we do not want to show all of the properties on actual DOM
 */
 
 /* Basic functions convert VirtualDOM to DOM */
 
-// Function conerts the transformed jsx by Babel into
+// Function converts the transformed jsx by Babel into
 // my representation
 const vdom = (type, props, ...children) => {
   props = props ? props : {};
@@ -111,7 +111,7 @@ const needChange = (oldElement, newElement) => {
   typeof oldElement !== typeof newElement || needChangeProps(oldElement.props, newElement.props)
 }
 
-// Function that updates props when necessary
+// Function that indetifies when it has to update props
 const needChangeProps = (oldProps, newProps) => {
   const allKeys = Object.assign({}, oldProps, newProps);
   for (let i=0; i < Object.keys(allKeys).length; i++) {
