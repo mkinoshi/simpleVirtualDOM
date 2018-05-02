@@ -22,6 +22,9 @@ const vdom = (type, props, ...children) => {
 
 // Function that converts virtualDOM to actual DOM
 const convertToDOM = (node) => {
+  if (!node) {
+    return document.createTextNode('');
+  }
   if (typeof node === 'string') {
     return document.createTextNode(node)
   }
@@ -64,6 +67,7 @@ const isUppercase = (letter) => (
   letter.toUpperCase() === letter
 )
 
+
 // Function that retuens true if a pecified character is lowercase
 const isLowercase = (letter) => (
   letter.toLowerCase() === letter
@@ -90,6 +94,9 @@ const updateIfNecessary = (element, oldElement, newElement, ind) => {
   } else if (needChange(oldElement, newElement)) {
     // replace old element with new element
     element.replaceChild(convertToDOM(newElement), element.childNodes[ind])
+  } else if (newElement.type && newElement.type === 'ul') {
+    // When children have keys
+    updateChildrenWithKeys(element.childNodes[ind], oldElement.children, newElement.children)
   } else if (newElement.type) {
     // run the function on children
     const maxInd = newElement.children.length > oldElement.children.length ?
@@ -100,6 +107,124 @@ const updateIfNecessary = (element, oldElement, newElement, ind) => {
     }
   }
 }
+
+// Function that updates elements which have keys 
+const updateChildrenWithKeys = (element, oldElementChildren, newElementChildren) => {
+  const keysInOldElement = oldElementChildren.map((oldVdom) => oldVdom.props.key);
+  const keysInNewElement = newElementChildren.map((newVdom) => newVdom.props.key);
+  const uniqueKeys = keysInOldElement.concat(keysInNewElement).filter((val, ind, arr) => arr.indexOf(val) === ind);
+  const keysInOldObject = createKeyObject(keysInOldElement)
+  const keysInNewObject = createKeyObject(keysInNewElement)
+  const { deletedKeys, insertedKeys, staticKeys, unsortedStatiskeys} = categorizeKeys(uniqueKeys, keysInOldObject, keysInNewObject, keysInOldElement)
+  let count = 0; // this variable keeps track of the items added
+  // First handle reorder of keys that stay the same
+  handleReorder(element, staticKeys, unsortedStatiskeys, keysInOldObject, keysInNewObject, keysInOldElement, oldElementChildren, newElementChildren)
+  handleInsert(element, insertedKeys, keysInNewObject, newElementChildren)
+  handleDeletion(element, deletedKeys, keysInOldObject, insertedKeys.length)
+}
+
+// Function that handles reorder of statick keys 
+const handleReorder = (element, staticKeys, unsortedStatiskeys, keysInOldObject, keysInNewObject, keysInOldElement, oldElementChildren, newElementChildren) => {
+  const replacedKeys = []
+  let flipped = false;
+  for (let i=0; i < staticKeys.length; i++) {
+    const oldInd = unsortedStatiskeys.indexOf(staticKeys[i]);
+    const newInd = staticKeys.indexOf(staticKeys[i]);
+    if (oldInd !== newInd && (replacedKeys.indexOf(keysInOldElement[oldInd]) === -1 || replacedKeys.indexOf(keysInOldElement[newInd]) === -1)) {
+      let firstInd;
+      let secondInd;
+      if (oldInd > newInd) {
+        firstInd = newInd;
+        secondInd = oldInd;
+      } else {
+        firstInd = oldInd;
+        secondInd = newInd;
+      }
+      // In case you have to replace the ones each other, you don't have to the second half
+      // First delete the one, after taking the reference
+      const firstTmp = element.removeChild(element.childNodes[secondInd]);
+      const valTmp = unsortedStatiskeys.splice(secondInd, 1);
+      // Then insert firstTmp,
+      element.insertBefore(firstTmp, element.childNodes[firstInd])
+      unsortedStatiskeys.splice(firstInd, 0, valTmp);
+      replacedKeys.push(keysInOldElement[oldInd])
+      replacedKeys.push(keysInOldElement[newInd])
+      flipped = true;
+    }
+  }
+  for (let j=0; j < staticKeys.length; j++) {
+    const oldInd = keysInOldObject[staticKeys[j]];
+    const newInd = keysInNewObject[staticKeys[j]];
+    const maxInd = newElementChildren[newInd].children.length > oldElementChildren[oldInd].children.length ?
+    newElementChildren[newInd].children.length :
+    oldElementChildren[oldInd].children.length;
+    for (let i=0; i < maxInd; i++) {
+      if (flipped) {
+        updateIfNecessary(element.childNodes[newInd], oldElementChildren[oldInd].children[i], newElementChildren[newInd].children[i], i)
+      } else {
+        updateIfNecessary(element.childNodes[oldInd], oldElementChildren[oldInd].children[i], newElementChildren[newInd].children[i], i)
+      }
+    }
+  }
+}
+
+// Function that handles addition of new item here
+const handleInsert = (element, insertedKeys, keysInNewObject, newElementChildren) => {
+  for (let i=0; i < insertedKeys.length; i++) {
+    const newInd = keysInNewObject[insertedKeys[i]]
+      // when it needs to insert
+      if (newInd === 0) {
+        element.insertBefore(convertToDOM(newElementChildren[newInd]), element.childNodes[0]);
+      } else {
+        element.insertBefore(convertToDOM(newElementChildren[newInd]), element.childNodes[newInd-1].nextSibling);
+      }
+  }
+}
+
+// Function that handles the deletion of a key
+const handleDeletion = (element, deletedKeys, keysInOldObject, count) => {
+  let c = count;
+  for (let i=0; i < deletedKeys.length; i++) {
+    const oldInd = keysInOldObject[deletedKeys[i]]
+    // when it needs to delete
+    element.removeChild(element.childNodes[oldInd+c])
+    c -= 1;
+  }
+}
+
+// Function that creates an object from a list of keys
+const createKeyObject = (elementList) => {
+  const keyObject = {}
+  elementList.forEach((key, ind) => {
+    keyObject[key] = ind
+  })
+  return keyObject;
+}
+
+// Function that categorizes each key will be inserted, deelted, or stayed the same
+// It also returns sorted arrays
+const categorizeKeys = (uniqueKeys, keysInOldObject, keysInNewObject) => {
+  const deletedKeys = [];
+  const insertedKeys = [];
+  const staticKeys = [];
+  uniqueKeys.forEach((key) => {
+    if (key in keysInOldObject && !(key in keysInNewObject)) {
+      // a key will be deleted
+      deletedKeys.push(key);
+    } else if (key in keysInNewObject && !(key in keysInOldObject)) {
+      // a key will be deleted
+      insertedKeys.push(key);
+    } else {
+      staticKeys.push(key);
+    }
+  })
+  deletedKeys.sort((a, b) => keysInOldObject[a] - keysInOldObject[b])
+  insertedKeys.sort((a, b) => keysInNewObject[a] - keysInNewObject[b])
+  const unsortedStatiskeys = staticKeys.slice(0)
+  staticKeys.sort((a, b) => keysInNewObject[a] - keysInNewObject[b])
+  return { deletedKeys, insertedKeys, staticKeys, unsortedStatiskeys}
+}
+
 
 // Function that checkes whether it needs to update element
 const needChange = (oldElement, newElement) => {
@@ -144,7 +269,7 @@ const comparePropValue = (oldProps, newProps) => {
     return true
   }
   // if it is a function, it converts to string without using JSON.stringfy
-  if (Object.prototype.toString.call(oldProps) === '[object Function]' && oldProps.toString() !== newProps.toString()) {
+  if (Object.prototype.toString.call(oldProps) === '[object Function]') {
     return true
   }
   // Otherwise, it converts objects to string, anc check whether these two are the same
