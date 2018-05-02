@@ -104,7 +104,7 @@ const updateViews = (state) => {
           })
         }
       </ul>
-      <h1>Create Romdome List</h1>
+      <h1>Create A Random List</h1>
       <button onClick={createRandomList}>Generate List</button>
       <div>The list number should be: <p>{state.random.join(', ')}</p></div>
       <ul>
