@@ -17,7 +17,7 @@ window.OLDSTATE = {
 }
 
 window.KEYS = 0;
-
+let count = 0;
 // Function periodically checks virtual DOMs
 const update = (element) => {
   if (window.CHANGE) {
@@ -25,12 +25,15 @@ const update = (element) => {
     window.CHANGE = false;
     window.OLDSTATE = Object.assign({}, window.STATE);
   }
+  // updateIfNecessary(element, views(count), views(count+1), 0);
+  count += 1;
 }
 
 // Function that adds a converted DOM to specified element
 const render = (element) => {
   element.appendChild(convertToDOM(updateViews(window.STATE)))
-  setInterval(() => update(element), 1)
+  // element.appendChild(convertToDOM(views(count)))
+  setInterval(() => update(element), 1000)
 }
 
 // Function that set state
@@ -121,30 +124,14 @@ const views = (count) => { //@
         <li key="d">item 4</li>
       </ul>
     )
-  } else if (count < 15) {
-    return (
-      <ul open={true}>
-        <li key="a">item 1</li>
-        <li key="c">item 3</li>
-        <li key="f">item 6</li>
-        <li key="g">item 7</li>
-        <li key="e">item 5</li>
-        <li key="b">item 2</li>
-      </ul>
-    )
-  } else if (count < 3) {
-    return (
-      <ul open={true}>
-        <li key="c">item 3</li>
-        <li key="b">item 2</li>
-      </ul>
-    )
   } else {
     return (
       <ul open={true}>
+        <li key="a">item 1</li>
         <li key="b">item 2</li>
-        <li key="c">item 3</li>
+        <li key="d">item 4</li>
+        <li key="e">item 5</li>
       </ul>
     )
-  } 
+  }
 }

@@ -127,19 +127,14 @@ const updateChildrenWithKeys = (element, oldElementChildren, newElementChildren)
 const handleReorder = (element, staticKeys, unsortedStatiskeys, keysInOldObject, keysInNewObject, keysInOldElement, oldElementChildren, newElementChildren) => {
   const replacedKeys = []
   let flipped = false;
+  console.log(unsortedStatiskeys);
+  console.log(staticKeys);
   for (let i=0; i < staticKeys.length; i++) {
     const oldInd = unsortedStatiskeys.indexOf(staticKeys[i]);
     const newInd = staticKeys.indexOf(staticKeys[i]);
     if (oldInd !== newInd && (replacedKeys.indexOf(keysInOldElement[oldInd]) === -1 || replacedKeys.indexOf(keysInOldElement[newInd]) === -1)) {
-      let firstInd;
-      let secondInd;
-      if (oldInd > newInd) {
-        firstInd = newInd;
-        secondInd = oldInd;
-      } else {
-        firstInd = oldInd;
-        secondInd = newInd;
-      }
+      const secondInd = keysInOldObject[staticKeys[i]]
+      const firstInd = keysInOldObject[unsortedStatiskeys[newInd]]
       // In case you have to replace the ones each other, you don't have to the second half
       // First delete the one, after taking the reference
       const firstTmp = element.removeChild(element.childNodes[secondInd]);
