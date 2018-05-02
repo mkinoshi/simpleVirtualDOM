@@ -9,11 +9,13 @@ window.CHANGE = false;
 window.STATE = {
   todos: [],
   onMove: -1,
+  random: [0, 1],
 }
 
 window.OLDSTATE = {
   todos: [],
   onMove: -1,
+  random: [0, 1],
 }
 
 window.KEYS = 0;
@@ -25,15 +27,13 @@ const update = (element) => {
     window.CHANGE = false;
     window.OLDSTATE = Object.assign({}, window.STATE);
   }
-  // updateIfNecessary(element, views(count), views(count+1), 0);
   count += 1;
 }
 
 // Function that adds a converted DOM to specified element
 const render = (element) => {
   element.appendChild(convertToDOM(updateViews(window.STATE)))
-  // element.appendChild(convertToDOM(views(count)))
-  setInterval(() => update(element), 1000)
+  setInterval(() => update(element), 100)
 }
 
 // Function that set state
@@ -48,7 +48,6 @@ const createNewInput = (ind) => {
   if (newItem) {
     const newState = window.STATE.todos.slice(0)
     newState.splice(ind+1, 0, [newItem, window.KEYS ])
-    // newState.push([newItem, window.KEYS ])
     window.KEYS += 1;
     setState({ todos: newState })
   }
@@ -77,6 +76,14 @@ const handleMove = (ind) => {
   setState({ todos: newState, onMove: -1 })
 }
 
+// Function that creates array of random numbers between 0 and 10
+const createRandomList = () => {
+  const randomNumberArray = _.shuffle(Array.from({length: 10}, (v, i) => i));
+  const numberOfNumbers = Math.floor(Math.random() * 10);
+  const newState = randomNumberArray.slice(0, numberOfNumbers);
+  setState({ random: newState })
+}
+
 const updateViews = (state) => {
   return (
     <div>
@@ -97,41 +104,14 @@ const updateViews = (state) => {
           })
         }
       </ul>
+      <h1>Create Romdome List</h1>
+      <button onClick={createRandomList}>Generate List</button>
+      <div>The list number should be: <p>{state.random.join(', ')}</p></div>
+      <ul>
+        {state.random.map((item) => (
+          <li key={'r-'+item}>{'item: '+ item}</li>
+        ))}
+      </ul>
     </div>
   )
-}
-
-// Function that updates views periodically
-const views = (count) => { //@
-  let handleWindow
-  if (count < 1) {
-    return (
-      <ul open={true}>
-        <li key="a">item 1</li>
-        <li key="b">item 2</li>
-        <li key="c">item 3</li>
-        <li key="d">item 4</li>
-        <li key="e">item 5</li>
-      </ul>
-    )
-  } else if (count < 3) {
-    return (
-      <ul open={true}>
-        <li key="a">item 3</li>
-        <li key="c">item 3</li>
-        <li key="b">item 2</li>
-        <li key="e">item 5</li>
-        <li key="d">item 4</li>
-      </ul>
-    )
-  } else {
-    return (
-      <ul open={true}>
-        <li key="a">item 1</li>
-        <li key="b">item 2</li>
-        <li key="d">item 4</li>
-        <li key="e">item 5</li>
-      </ul>
-    )
-  }
 }
